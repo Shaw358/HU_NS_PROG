@@ -2,8 +2,10 @@ from tkinter import *
 from tkinter import ttk
 from PIL import ImageTk, Image
 import UserWindow
-# FIXME: Importing the main file into UserWindow one seems like a bad idea... Too bad!
-import main
+from datetime import datetime
+import datetime
+import csv
+import os
 
 # Tkinter init
 window = Tk()
@@ -12,6 +14,9 @@ window = Tk()
 max_characters = 140
 nameFieldCleared = False
 mainFieldCleared = False
+
+
+# ---------------------------------------------------------------------------------------------------------------------------
 
 # Pre Init functions
 # FIXME: This is a stupid way of doing this, one function should be able to clear any text!
@@ -37,26 +42,55 @@ def OnTextFieldAltered(event):
     charactersUsed.config(text=(str(length) + "/" + str(max_characters)))
 
 
+# Helper functions
+def DateGrabber():
+    return datetime.date.today()
+
+
+def TimeStampGrabber():
+    return datetime.datetime.now().time()
+
+
+def WriteMessageToCSV(data):
+    if data[0] is None or data[0] == "":
+        data[0] = "Annoniem"
+
+    with open('messages.csv', 'a', newline='') as file:
+        writer = csv.writer(file)
+        # NOTE: data[0] is the name, data[1] is the main message, data[2] is the station
+        writer.writerow([DateGrabber(), TimeStampGrabber(), data[0], data[1], data[2]])
+
+
 def SubmitReview():
     text = mainText.get("1.0", 'end-1c')
     length = len(text)
-    if length > UserWindow.max_characters and stationSelection.get() != "" or stationSelection.get() != NONE:
+    if length > UserWindow.max_characters or stationSelection.get() == "" or stationSelection.get() == NONE:
         a = 0
-        # the fucked up
+        # they fucked up
     else:
-        SignalToMain()
+        BuildRow()
 
 
-def add_handler(self, observer):
-    self.handlers.append(observer)
-
-
-def SignalToMain():
+def BuildRow():
     data = [name.get("1.0", 'end-1c'), mainText.get("1.0", 'end-1c'), stationSelection.get()]
-    main.GetInfoFromTkinter(data)
+    WriteMessageToCSV(data)
 
 
-# Please let me never do UI code again
+# creates the CSV if none exists
+def CSV_Creator():
+    if not os.path.isfile('messages.csv'):
+        with open('messages.csv', 'w', newline='') as file:
+            csv_writer = csv.writer(file)
+
+            data = ["Date", "Timestamp", "User", "Message", "Station", "ModerationResult", "ModerationDate",
+                    "ModerationTime", "ModeratorName", "ModeratorEmail"]
+            csv_writer.writerow(data)
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------------
+
+# Never make me do UI code again please
 window.geometry("1400x800")
 window.resizable(False, False)
 
@@ -113,4 +147,8 @@ topText.place(x=401, y=200)
 submitButton = Button(window, text="       klaar       ", command=SubmitReview)
 submitButton.place(x=400, y=330)
 
+CSV_Creator()
+
 window.mainloop()
+
+# ---------------------------------------------------------------------------------------------------------------------------
