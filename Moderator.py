@@ -5,62 +5,57 @@ from PIL import ImageTk, Image
 import csv
 from datetime import datetime
 import datetime
+import DatabaseManager
 
 
 # Helper functions
 def DateGrabber():
-    return datetime.date.today()
-
-
-def TimeStampGrabber():
-    return datetime.datetime.now().time()
+    return datetime.datetime.today().replace(microsecond=0)
 
 
 def Submit():
-    data = ["Date", "Timestamp", "User", "Message", "Station", "ModerationResult", "ModerationDate", "ModerationTime",
-            "ModeratorName", "ModeratorEmail"]
-
-    with open('messagesModerated.csv', 'a', newline='') as file:
-        csv_writer = csv.writer(file)
-
-        with open('messages.csv', 'r') as csv_file:
-            reader = csv.reader(csv_file)
-            indexer = -1
-            for row in reader:
-                if indexer >= 0:
-                    row += [choices[indexer].get(), DateGrabber(), TimeStampGrabber(), name.get('1.0', 'end-1c'), email.get('1.0', 'end-1c')]
-                    csv_writer.writerow(row)
-                indexer += 1
+    indexer = 0
+    for val in choices:
+        if val == "Toelaten":
+            val = True
+        else:
+            val = False
+        query = "INSERT INTO Beoordelingen (_DateTime, ModeratorNaam, ModeratorEmail, _BerichtID, IsGoedgekeurd) VALUES (%s, %s, %s, %s, %s);"
+        params = (DateGrabber(), name.get("1.0", 'end-1c'), email.get("1.0", 'end-1c'), IDsOfMessages[indexer], val)
+        DatabaseManager.ExecuteSQL_Query(query, params, False)
+        indexer += 1
 
 
 def OpenMessages():
-    db = open('messages.csv', 'r')
-    csv_reader = csv.reader(db)
+    query = f"SELECT * FROM Bericht;"
+    rows = DatabaseManager.ExecuteSQL_Query(query, False, True)
 
-    indexer = 0
+    skipFirst = True
     posX = 50
     posY = 170
 
     yIncrement = 100
-    # NOTE: 0 = date, 1 = timestamp, 2 = user, 3 = message, 4 = station
-    for row in csv_reader:
-        username = Label(window, text=str(row[2]))
-        username.place(x=posX, y=posY)
+    # 0 = ID, 1 = Message, 2 = DateTime, 3 = Name, 4 = Station
+    for row in rows:
+        if True:
+            print(row[0])
+            IDsOfMessages.append(row[0])
+            username = Label(window, text=str(row[3]))
+            username.place(x=posX, y=posY)
 
-        mainText = Text(window, height=4, width=40)
-        mainText.place(x=posX, y=posY + 20)
-        mainText.insert(END, row[3])
-        mainText.config(state=DISABLED)
+            mainText = Text(window, height=4, width=40)
+            mainText.place(x=posX, y=posY + 20)
+            mainText.insert(END, row[1])
+            mainText.config(state=DISABLED)
 
-        stationSelection = ttk.Combobox(
-            state="readonly",
-            values=["Toelaten", "Weigeren"]
-        )
-        stationSelection.place(x=posX + 180, y=posY)
-        choices.append(stationSelection)
+            stationSelection = ttk.Combobox(
+                state="readonly",
+                values=["Toelaten", "Weigeren"]
+            )
+            stationSelection.place(x=posX + 180, y=posY)
+            choices.append(stationSelection)
 
-        indexer += 1
-        posY += yIncrement
+            posY += yIncrement
 
 
 window = Tk()
@@ -94,6 +89,7 @@ email.place(x=600, y=400)
 email.insert(END, "Email")
 
 choices = []
+IDsOfMessages = []
 
 OpenMessages()
 

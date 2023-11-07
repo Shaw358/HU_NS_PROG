@@ -6,6 +6,7 @@ from datetime import datetime
 import datetime
 import csv
 import os
+import DatabaseManager
 
 # Tkinter init
 window = Tk()
@@ -44,13 +45,10 @@ def OnTextFieldAltered(event):
 
 # Helper functions
 def DateGrabber():
-    return datetime.date.today()
+    return datetime.datetime.today().replace(microsecond=0)
 
 
-def TimeStampGrabber():
-    return datetime.datetime.now().time()
-
-
+# NOTE: DEPRECATED
 def WriteMessageToCSV(data):
     if data[0] is None or data[0] == "":
         data[0] = "Annoniem"
@@ -58,34 +56,30 @@ def WriteMessageToCSV(data):
     with open('messages.csv', 'a', newline='') as file:
         writer = csv.writer(file)
         # NOTE: data[0] is the name, data[1] is the main message, data[2] is the station
-        writer.writerow([DateGrabber(), TimeStampGrabber(), data[0], data[1], data[2]])
+        writer.writerow([DateGrabber(), data[0], data[1], data[2]])
 
 
 def SubmitReview():
+    query = "INSERT INTO Bericht (Bericht, _DateTime, ReizigerNaam, Station) VALUES (%s, %s, %s, %s);"
+    params = (mainText.get("1.0", 'end-1c'), DateGrabber(), name.get("1.0", 'end-1c'), str(stationSelection.get()))
     text = mainText.get("1.0", 'end-1c')
     length = len(text)
-    if length > UserWindow.max_characters or stationSelection.get() == "" or stationSelection.get() == NONE:
+    if length > UserWindow.max_characters or stationSelection.get() == "" or stationSelection.get() is None:
         a = 0
         # they fucked up
     else:
-        BuildRow()
+        DatabaseManager.ExecuteSQL_Query(query, params, False)
 
 
-def BuildRow():
-    data = [name.get("1.0", 'end-1c'), mainText.get("1.0", 'end-1c'), stationSelection.get()]
-    WriteMessageToCSV(data)
-
-
-# creates the CSV if none exists
+# creates the CSV if none exists - DEPRECATED
 def CSV_Creator():
     if not os.path.isfile('messages.csv'):
         with open('messages.csv', 'w', newline='') as file:
             csv_writer = csv.writer(file)
 
-            data = ["Date", "Timestamp", "User", "Message", "Station", "ModerationResult", "ModerationDate",
+            data = ["DateTime", "User", "Message", "Station", "ModerationResult", "ModerationDate",
                     "ModerationTime", "ModeratorName", "ModeratorEmail"]
             csv_writer.writerow(data)
-
 
 
 # ---------------------------------------------------------------------------------------------------------------------------
@@ -147,7 +141,7 @@ topText.place(x=401, y=200)
 submitButton = Button(window, text="       klaar       ", command=SubmitReview)
 submitButton.place(x=400, y=330)
 
-CSV_Creator()
+DatabaseManager.ConnectToDB()
 
 window.mainloop()
 
