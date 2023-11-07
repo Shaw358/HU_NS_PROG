@@ -1,5 +1,6 @@
+# This file is repsonsible for letting the other scripts use the database without clogging themselves
 import psycopg2
-import DatabaseManager
+import DatabaseManager # FIXME: This returns a warning but this works for now
 
 cur = None
 
@@ -22,6 +23,8 @@ def ExecuteSQL_Query(query, parameters=None, returnVal=True):
         DatabaseManager.cur.execute(query)
     else:
         DatabaseManager.cur.execute(query, parameters)
+
+    Commit()
 
     result = None
     if returnVal:

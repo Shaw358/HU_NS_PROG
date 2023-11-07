@@ -1,7 +1,8 @@
+# This file is repsonsible for letting the user make and commit their reviews
 from tkinter import *
 from tkinter import ttk
 from PIL import ImageTk, Image
-import UserWindow
+import UserWindow # FIXME: This returns a warning but this works for now
 from datetime import datetime
 import datetime
 import csv
@@ -20,7 +21,7 @@ mainFieldCleared = False
 # ---------------------------------------------------------------------------------------------------------------------------
 
 # Pre Init functions
-# FIXME: This is a stupid way of doing this, one function should be able to clear any text!
+# FIXME: This is a stupid way of doing this, one function should be able to clear any text but Tkinter has forced my hand!
 def ClearNameTextField(event):
     if not UserWindow.nameFieldCleared:
         UserWindow.nameFieldCleared = True
@@ -33,6 +34,7 @@ def ClearMainText_TextField(event):
         mainText.delete("1.0", "end")
 
 
+# This function signals the user on whether they have exceeded the character limit
 def OnTextFieldAltered(event):
     text = mainText.get("1.0", 'end-1c')
     length = len(text)
@@ -65,13 +67,14 @@ def SubmitReview():
     text = mainText.get("1.0", 'end-1c')
     length = len(text)
     if length > UserWindow.max_characters or stationSelection.get() == "" or stationSelection.get() is None:
-        a = 0
-        # they fucked up
+        # characters used
+        charactersUsed = Label(window, text="Je zit boven de maximaal toegelaten characters of hebt geen station geselecteerd!")
+        charactersUsed.place(x=50, y=360)
     else:
         DatabaseManager.ExecuteSQL_Query(query, params, False)
 
 
-# creates the CSV if none exists - DEPRECATED
+# creates the CSV if none exists - NOTE: DEPRECATED
 def CSV_Creator():
     if not os.path.isfile('messages.csv'):
         with open('messages.csv', 'w', newline='') as file:
@@ -126,9 +129,13 @@ charactersUsed = Label(window, text="0/140")
 charactersUsed.place(x=50, y=330)
 
 # station selection
+query = "SELECT station_city FROM StationService;"
+station_names = []
+station_city_values = tuple(row[0] for row in DatabaseManager.ExecuteSQL_Query(query, False, True))
+
 stationSelection = ttk.Combobox(
     state="readonly",
-    values=["Python", "C", "C++", "Java"]
+    values=station_city_values
 )
 stationSelection.place(x=400, y=240)
 
@@ -140,8 +147,6 @@ topText.place(x=401, y=200)
 # submit button
 submitButton = Button(window, text="       klaar       ", command=SubmitReview)
 submitButton.place(x=400, y=330)
-
-DatabaseManager.ConnectToDB()
 
 window.mainloop()
 

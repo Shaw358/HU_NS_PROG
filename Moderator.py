@@ -1,8 +1,7 @@
+# This file is repsonsible for letting the moderators review the submitted content
 from tkinter import *
 from tkinter import ttk
 from PIL import ImageTk, Image
-# FIXME: Importing the main file into UserWindow one seems like a bad idea... Too bad!
-import csv
 from datetime import datetime
 import datetime
 import DatabaseManager
@@ -16,7 +15,7 @@ def DateGrabber():
 def Submit():
     indexer = 0
     for val in choices:
-        if val == "Toelaten":
+        if val.get() == "Toelaten":
             val = True
         else:
             val = False
@@ -27,7 +26,7 @@ def Submit():
 
 
 def OpenMessages():
-    query = f"SELECT * FROM Bericht;"
+    query = f"SELECT B.* FROM Bericht B LEFT JOIN Beoordelingen BD ON B.BerichtID = BD._BerichtID WHERE BD._BerichtID IS NULL;"
     rows = DatabaseManager.ExecuteSQL_Query(query, False, True)
 
     skipFirst = True
@@ -38,7 +37,6 @@ def OpenMessages():
     # 0 = ID, 1 = Message, 2 = DateTime, 3 = Name, 4 = Station
     for row in rows:
         if True:
-            print(row[0])
             IDsOfMessages.append(row[0])
             username = Label(window, text=str(row[3]))
             username.place(x=posX, y=posY)
@@ -58,6 +56,7 @@ def OpenMessages():
             posY += yIncrement
 
 
+# Make a Tkinter instance
 window = Tk()
 window.geometry("1400x900")
 window.resizable(False, False)
@@ -88,9 +87,9 @@ email = Text(window, height=1, width=40)
 email.place(x=600, y=400)
 email.insert(END, "Email")
 
+# choices of accepting or denying reviews
 choices = []
 IDsOfMessages = []
 
 OpenMessages()
-
 window.mainloop()
